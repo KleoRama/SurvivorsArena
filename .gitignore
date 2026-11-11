@@ -1,0 +1,30 @@
+# Cartelle e file generati dalla compilazione di Visual Studio
+bin/
+obj/
+Debug/
+Release/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+
+# File di stato e artefatti di build
+*.exe
+*.pdb
+*.ilk
+*.tlog
+*.idb
+*.lastbuildstate
+*.recipe
+*.log
+
+# File di configurazione locale utente e cache di Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Pacchetti NuGet gestiti tramite packages.config
+packages/
+!packages.config
