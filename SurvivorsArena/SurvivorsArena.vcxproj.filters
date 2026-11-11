@@ -81,6 +81,9 @@
     <ClCompile Include="dependencies_GL_GLFW\ImGui\imgui_widgets.cpp">
       <Filter>Dipendenze esterne\ImGui\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="BackgroundRenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshData.h">
@@ -149,6 +152,9 @@
     <ClInclude Include="dependencies_GL_GLFW\ImGui\imstb_truetype.h">
       <Filter>Dipendenze esterne\ImGui\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="BackgroundRenderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="dependencies_GL_GLFW\lib\glfw3.lib" />
@@ -159,6 +165,11 @@
     <None Include="shader\fragmentshaderC.glsl">
       <Filter>Shader</Filter>
     </None>
+    <None Include="shader\background.frag">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\background.vert">
+      <Filter>Shader</Filter>
+    </None>
   </ItemGroup>
 </Project>
-

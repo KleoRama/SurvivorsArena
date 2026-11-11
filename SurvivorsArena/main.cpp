@@ -5,6 +5,7 @@
 
 #include <iostream>
 
+#include "BackgroundRenderer.h"
 #include "Gui.h"
 #include "Input.h"
 #include "Renderer.h"
@@ -72,7 +73,18 @@ int main()
             return 1;
         }
 
+        // Secondo shader program dedicato solo allo sfondo
+        Shader backgroundShader;
+        if (!backgroundShader.load("shader/background.vert", "shader/background.frag"))
+        {
+            std::cerr << "Errore caricamento shader sfondo\n";
+            glfwDestroyWindow(window);
+            glfwTerminate();
+            return 1;
+        }
+
         Renderer renderer(shader);
+        BackgroundRenderer background(backgroundShader);
         Scene scene;
 
         Gui gui;
@@ -81,6 +93,10 @@ int main()
         while (!glfwWindowShouldClose(window))
         {
             glfwPollEvents();
+
+            // Se ho premuto F1, apre o chiude il menu debug
+            if (Input::consumeDebugMenuToggle())
+                gui.toggleDebugMenu();
 
             int width = 0;
             int height = 0;
@@ -97,7 +113,15 @@ int main()
             );
             renderer.setProjectionMatrix(projection);
 
-            renderer.beginFrame(gui.clearColor());
+            // Tempo trascorso dall'avvio, usato dallo shader per animare lo sfondo
+            const float now = static_cast<float>(glfwGetTime());
+
+            // Pulisce lo schermo e disegna lo sfondo sempre pieno (mai in wireframe)
+            renderer.beginFrame(glm::vec4(0.01f, 0.01f, 0.015f, 1.0f));
+            renderer.setWireframe(false);
+            background.draw(now);
+
+            // Ripristina il wireframe scelto in ImGui e disegna gli oggetti della scena sopra lo sfondo
             renderer.setWireframe(gui.wireframe());
             renderer.drawScene(scene);
 

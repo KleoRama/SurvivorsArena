@@ -17,9 +17,10 @@ public:
     void render();
     void shutdown();
 
-    const glm::vec4& clearColor() const
+    // Apre o chiude il pannello debug
+    void toggleDebugMenu()
     {
-        return m_clearColor;
+        m_showDebugMenu = !m_showDebugMenu;
     }
 
     bool wireframe() const
@@ -28,8 +29,8 @@ public:
     }
 
 private:
-    glm::vec4 m_clearColor{0.05f, 0.08f, 0.14f, 1.0f};
     bool m_initialized = false;
+    bool m_showDebugMenu = false; // All'avvio il menu debug parte chiuso
     bool m_wireframe = false;
 };
 

@@ -31,18 +31,14 @@ void Gui::beginFrame()
 
 void Gui::draw()
 {
-    ImGui::SetNextWindowPos(ImVec2(12, 12), ImGuiCond_FirstUseEver);
-    ImGui::Begin("Survivors Arena - Controlli");
-
-    ImGui::Text("Colore dello sfondo");
-    ImGui::ColorEdit3("Background", &m_clearColor.r);
-
-    ImGui::Separator();
-
-    ImGui::Text("Modalita' di visualizzazione");
-    ImGui::Checkbox("Wireframe", &m_wireframe);
-
-    ImGui::End();
+    // Mostra menu debug solo quando e' aperto (si chiude con F1)
+    if (m_showDebugMenu)
+    {
+        ImGui::SetNextWindowPos(ImVec2(12, 12), ImGuiCond_FirstUseEver);
+        ImGui::Begin("Debug (F1)", &m_showDebugMenu);
+        ImGui::Checkbox("Wireframe", &m_wireframe);
+        ImGui::End();
+    }
 }
 
 void Gui::render()
