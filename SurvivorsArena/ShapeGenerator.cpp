@@ -29,6 +29,35 @@ MeshData ShapeGenerator::createTriangle(
     return data;
 }
 
+//rettangolo per il player, 2 triangoli con gradiente verticale
+MeshData ShapeGenerator::createRectangle(
+    const glm::vec4& colorBottom,
+    const glm::vec4& colorTop)
+{
+    MeshData data;
+
+    //rettangolo unitario [-0.5, 0.5] x [-0.5, 0.5] diviso in due triangoli
+    data.positions.push_back(glm::vec3(-0.5f, -0.5f, 0.0f));
+    data.positions.push_back(glm::vec3(0.5f, -0.5f, 0.0f));
+    data.positions.push_back(glm::vec3(0.5f, 0.5f, 0.0f));
+
+    data.positions.push_back(glm::vec3(-0.5f, -0.5f, 0.0f));
+    data.positions.push_back(glm::vec3(0.5f, 0.5f, 0.0f));
+    data.positions.push_back(glm::vec3(-0.5f, 0.5f, 0.0f));
+
+    data.colors.push_back(colorBottom);
+    data.colors.push_back(colorBottom);
+    data.colors.push_back(colorTop);
+
+    data.colors.push_back(colorBottom);
+    data.colors.push_back(colorTop);
+    data.colors.push_back(colorTop);
+
+    data.primitiveType = GL_TRIANGLES;
+
+    return data;
+}
+
 
 MeshData ShapeGenerator::createCircle(
     float cx,

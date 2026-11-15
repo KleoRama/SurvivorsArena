@@ -84,6 +84,9 @@
     <ClCompile Include="BackgroundRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshData.h">
@@ -153,6 +156,9 @@
       <Filter>Dipendenze esterne\ImGui\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="BackgroundRenderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

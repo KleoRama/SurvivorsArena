@@ -4,8 +4,9 @@
 
 namespace Input
 {
-    double mouseX = 0.0;
-    double mouseY = 0.0;
+    // Posizione iniziale a destra del centro cosi all'avvio la balestra punta dritta
+    double mouseX = 900.0;
+    double mouseY = 350.0;
     namespace
     {
         // Diventa true quando premo F1 e si resetta appena il main lo legge

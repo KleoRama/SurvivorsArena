@@ -79,6 +79,7 @@
   <ItemGroup>
     <ClCompile Include="BackgroundRenderer.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Player.cpp" />
     <ClCompile Include="ShapeGenerator.cpp" />
     <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="Scene.cpp" />
@@ -99,6 +100,7 @@
   <ItemGroup>
     <ClInclude Include="BackgroundRenderer.h" />
     <ClInclude Include="MeshData.h" />
+    <ClInclude Include="Player.h" />
     <ClInclude Include="ShapeGenerator.h" />
     <ClInclude Include="Geometry.h" />
     <ClInclude Include="Scene.h" />

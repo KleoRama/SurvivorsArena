@@ -19,6 +19,12 @@ public:
         const glm::vec4& color3
     );
 
+    //rettangolo per il protagonista
+    static MeshData createRectangle(
+        const glm::vec4& colorBottom,
+        const glm::vec4& colorTop
+    );
+
     static MeshData createCircle(
         float cx, float cy,
         float radiusX, float radiusY,

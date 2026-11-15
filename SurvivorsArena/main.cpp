@@ -3,11 +3,13 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <cmath>
 #include <iostream>
 
 #include "BackgroundRenderer.h"
 #include "Gui.h"
 #include "Input.h"
+#include "Player.h"
 #include "Renderer.h"
 #include "Scene.h"
 #include "Shader.h"
@@ -86,6 +88,7 @@ int main()
         Renderer renderer(shader);
         BackgroundRenderer background(backgroundShader);
         Scene scene;
+        Player player(scene);
 
         Gui gui;
         gui.initialize(window);
@@ -113,10 +116,20 @@ int main()
             );
             renderer.setProjectionMatrix(projection);
 
+            // Converte le coordinate del mouse nello spazio mondo e orienta la balestra
+            const float worldMouseX =
+                (static_cast<float>(Input::mouseX) / static_cast<float>(width)) * (2.0f * halfWidth) - halfWidth;
+            const float worldMouseY =
+                (static_cast<float>(Input::mouseY) / static_cast<float>(height)) * (2.0f * WORLD_HALF_HEIGHT) - WORLD_HALF_HEIGHT;
+            const glm::vec2 playerPos(0.0f, 0.0f);
+            const glm::vec2 shoulderPos = playerPos + glm::vec2(0.0f, 1.5f);
+            const float aimAngle = std::atan2(worldMouseY - shoulderPos.y, worldMouseX - shoulderPos.x);
+            player.updateTransform(scene, playerPos, aimAngle);
+
             // Tempo trascorso dall'avvio, usato dallo shader per animare lo sfondo
             const float now = static_cast<float>(glfwGetTime());
 
-            // Pulisce lo schermo e disegna lo sfondo sempre pieno (mai in wireframe)
+            // Pulisce lo schermo e disegna lo sfondo 
             renderer.beginFrame(glm::vec4(0.01f, 0.01f, 0.015f, 1.0f));
             renderer.setWireframe(false);
             background.draw(now);
