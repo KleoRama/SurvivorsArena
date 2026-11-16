@@ -69,11 +69,11 @@ Player::Player(Scene& scene)
     addPart(m_bodyParts, scene, triCapeGeo, glm::vec2(0.0f, -3.8f), glm::vec2(5.0f, 14.0f), pi);
     addPart(m_bodyParts, scene, triCapeGeo, glm::vec2(2.3f, -3.5f), glm::vec2(4.6f, 13.5f), pi + 0.14f);
 
-    // 2. Gambe e stivali
-    addPart(m_bodyParts, scene, circleSteelGeo, glm::vec2(-1.8f, -6.2f), glm::vec2(2.2f, 8.2f));
-    addPart(m_bodyParts, scene, circleSteelGeo, glm::vec2(1.8f, -6.2f), glm::vec2(2.2f, 8.2f));
-    addPart(m_bodyParts, scene, triSteelGeo, glm::vec2(-2.0f, -10.8f), glm::vec2(2.4f, 1.8f));
-    addPart(m_bodyParts, scene, triSteelGeo, glm::vec2(2.0f, -10.8f), glm::vec2(2.4f, 1.8f));
+    // 2. Gambe e stivali (divisi in sinistra e destra per animare i passi)
+    addPart(m_leftLegParts, scene, circleSteelGeo, glm::vec2(-1.8f, -6.2f), glm::vec2(2.2f, 8.2f));
+    addPart(m_leftLegParts, scene, triSteelGeo, glm::vec2(-2.0f, -10.8f), glm::vec2(2.4f, 1.8f));
+    addPart(m_rightLegParts, scene, circleSteelGeo, glm::vec2(1.8f, -6.2f), glm::vec2(2.2f, 8.2f));
+    addPart(m_rightLegParts, scene, triSteelGeo, glm::vec2(2.0f, -10.8f), glm::vec2(2.4f, 1.8f));
 
     // 3. Busto, cintura, braccia statiche e spallacci
     addPart(m_bodyParts, scene, rectCrimsonGeo, glm::vec2(-3.5f, 0.8f), glm::vec2(1.4f, 4.0f));
@@ -113,20 +113,55 @@ void Player::addPart(
     targetList.push_back(part);
 }
 
-void Player::updateTransform(Scene& scene, const glm::vec2& position, float aimAngleRadians)
+void Player::updateTransform(
+    Scene& scene,
+    const glm::vec2& position,
+    float aimAngleRadians,
+    bool isMoving,
+    float dt)
 {
-    const glm::mat4 worldBody = glm::translate(
+    if (isMoving)
+        m_walkPhase += dt * 11.0f;
+    else
+        m_walkPhase = 0.0f;
+
+    const float stepSin = std::sin(m_walkPhase);
+    const float bobY = isMoving ? (std::abs(stepSin) * 0.7f) : 0.0f;
+    const float bodyTilt = isMoving ? (stepSin * 0.06f) : 0.0f;
+    const float legStep = isMoving ? (stepSin * 1.4f) : 0.0f;
+
+    const glm::mat4 worldRoot = glm::translate(
         glm::mat4(1.0f),
         glm::vec3(position.x, position.y, 0.0f)
     );
+
+    // Gambe animate in controfase durante il movimento
+    const glm::mat4 worldLeftLeg = glm::translate(
+        worldRoot,
+        glm::vec3(0.0f, legStep, 0.0f)
+    );
+    for (const Part& part : m_leftLegParts)
+        scene.instance(part.instanceIndex).modelMatrix = worldLeftLeg * part.localTransform;
+
+    const glm::mat4 worldRightLeg = glm::translate(
+        worldRoot,
+        glm::vec3(0.0f, -legStep, 0.0f)
+    );
+    for (const Part& part : m_rightLegParts)
+        scene.instance(part.instanceIndex).modelMatrix = worldRightLeg * part.localTransform;
+
+    // Busto, mantello e testa oscillano leggermente mentre il player cammina
+    glm::mat4 worldBody = glm::translate(worldRoot, glm::vec3(0.0f, bobY, 0.0f));
+    if (bodyTilt != 0.0f)
+        worldBody = glm::rotate(worldBody, bodyTilt, glm::vec3(0.0f, 0.0f, 1.0f));
 
     for (const Part& part : m_bodyParts)
         scene.instance(part.instanceIndex).modelMatrix = worldBody * part.localTransform;
 
     // La balestra ruota attorno al petto; quando miro a sinistra si specchia in Y per non capovolgersi
-    const glm::vec2 shoulderOffset(0.0f, 1.5f);
+    const glm::vec2 shoulderOffset(0.0f, 1.5f + bobY * 0.5f);
     glm::mat4 worldWeapon = glm::translate(
-        worldBody,
+        worldRoot,
         glm::vec3(shoulderOffset.x, shoulderOffset.y, 0.0f)
     );
     worldWeapon = glm::rotate(worldWeapon, aimAngleRadians, glm::vec3(0.0f, 0.0f, 1.0f));

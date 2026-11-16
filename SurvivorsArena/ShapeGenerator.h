@@ -25,6 +25,12 @@ public:
         const glm::vec4& colorTop
     );
 
+    // Gemma a rombo composta da 4 triangoli sfaccettati
+    static MeshData createGem(
+        const glm::vec4& centerColor,
+        const glm::vec4& borderColor
+    );
+
     static MeshData createCircle(
         float cx, float cy,
         float radiusX, float radiusY,

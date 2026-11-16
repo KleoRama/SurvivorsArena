@@ -14,8 +14,14 @@ class Player
 public:
     explicit Player(Scene& scene);
 
-    // Aggiorna la posizione del personaggio nel mondo e orienta la balestra verso aimAngleRadians
-    void updateTransform(Scene& scene, const glm::vec2& position, float aimAngleRadians);
+    // Aggiorna la posizione del personaggio, l'animazione di camminata e orienta la balestra
+    void updateTransform(
+        Scene& scene,
+        const glm::vec2& position,
+        float aimAngleRadians,
+        bool isMoving = false,
+        float dt = 0.0f
+    );
 
 private:
     struct Part
@@ -34,6 +40,9 @@ private:
     );
 
     std::vector<Part> m_bodyParts;
+    std::vector<Part> m_leftLegParts;
+    std::vector<Part> m_rightLegParts;
     std::vector<Part> m_weaponParts;
+    float m_walkPhase = 0.0f;
 };
 

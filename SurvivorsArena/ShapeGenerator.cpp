@@ -58,6 +58,63 @@ MeshData ShapeGenerator::createRectangle(
     return data;
 }
 
+// Gemma sfaccettata a forma di rombo composta da 4 triangoli
+MeshData ShapeGenerator::createGem(
+    const glm::vec4& centerColor,
+    const glm::vec4& borderColor)
+{
+    MeshData data;
+
+    const glm::vec3 center(0.0f, 0.0f, 0.0f);
+    const glm::vec3 top(0.0f, 0.65f, 0.0f);
+    const glm::vec3 right(0.45f, 0.0f, 0.0f);
+    const glm::vec3 bottom(0.0f, -0.65f, 0.0f);
+    const glm::vec3 left(-0.45f, 0.0f, 0.0f);
+
+    const glm::vec4 darkFacet(
+        borderColor.r * 0.65f,
+        borderColor.g * 0.65f,
+        borderColor.b * 0.75f,
+        borderColor.a
+    );
+
+    // Faccetta superiore destra
+    data.positions.push_back(center);
+    data.positions.push_back(right);
+    data.positions.push_back(top);
+    data.colors.push_back(centerColor);
+    data.colors.push_back(borderColor);
+    data.colors.push_back(borderColor);
+
+    // Faccetta superiore sinistra
+    data.positions.push_back(center);
+    data.positions.push_back(top);
+    data.positions.push_back(left);
+    data.colors.push_back(centerColor);
+    data.colors.push_back(borderColor);
+    data.colors.push_back(borderColor);
+
+    // Faccetta inferiore sinistra
+    data.positions.push_back(center);
+    data.positions.push_back(left);
+    data.positions.push_back(bottom);
+    data.colors.push_back(centerColor);
+    data.colors.push_back(darkFacet);
+    data.colors.push_back(darkFacet);
+
+    // Faccetta inferiore destra
+    data.positions.push_back(center);
+    data.positions.push_back(bottom);
+    data.positions.push_back(right);
+    data.colors.push_back(centerColor);
+    data.colors.push_back(darkFacet);
+    data.colors.push_back(darkFacet);
+
+    data.primitiveType = GL_TRIANGLES;
+
+    return data;
+}
+
 
 MeshData ShapeGenerator::createCircle(
     float cx,

@@ -59,6 +59,12 @@ namespace
     constexpr float PELLET_RADIUS = 2.2f;
     constexpr float PELLET_SPEED = 62.0f;
 
+    constexpr int MAX_GEMS = MAX_BATS + MAX_GHOSTS;
+    constexpr float GEM_SCALE = 5.5f;
+    constexpr float GEM_RADIUS = 3.6f;
+    constexpr float GEM_LIFETIME = 8.0f;      // Secondi prima che la gemma a terra sparisca
+    constexpr float GEM_WARNING_TIME = 2.5f;  // Negli ultimi secondi pulsa molto piu' velocemente
+
     struct Projectile
     {
         std::size_t instanceIndex = 0;
@@ -90,6 +96,15 @@ namespace
         std::size_t instanceIndex = 0;
         glm::vec2 position{0.0f};
         glm::vec2 velocity{0.0f};
+        bool active = false;
+    };
+
+    struct Gem
+    {
+        std::size_t instanceIndex = 0;
+        glm::vec2 position{0.0f};
+        float timeLeft = 0.0f;
+        float animTime = 0.0f;
         bool active = false;
     };
 
@@ -483,16 +498,85 @@ namespace
         }
     }
 
+    // Fa cadere a terra una gemma nella posizione del nemico appena sconfitto
+    void spawnGem(std::vector<Gem>& gems, const glm::vec2& position)
+    {
+        for (Gem& gem : gems)
+        {
+            if (gem.active)
+                continue;
+
+            gem.active = true;
+            gem.position = position;
+            gem.timeLeft = GEM_LIFETIME;
+            gem.animTime = 0.0f;
+            return;
+        }
+    }
+
+    // Aggiorna le gemme a terra (pulsazione, scomparsa per tempo e raccolta da parte del player)
+    void updateGems(
+        Scene& scene,
+        std::vector<Gem>& gems,
+        const glm::vec2& playerPos,
+        int playerLives,
+        float dt,
+        int& score)
+    {
+        for (Gem& gem : gems)
+        {
+            if (!gem.active)
+                continue;
+
+            gem.timeLeft -= dt;
+            if (gem.timeLeft <= 0.0f)
+            {
+                gem.active = false;
+                continue;
+            }
+
+            // Negli ultimi secondi prima del despawn la gemma pulsa molto piu' velocemente
+            const float pulseSpeed = (gem.timeLeft <= GEM_WARNING_TIME) ? 20.0f : 6.0f;
+            gem.animTime += dt * pulseSpeed;
+
+            if (playerLives > 0)
+            {
+                const glm::vec2 diff = gem.position - playerPos;
+                const float pickupRadius = GEM_RADIUS + PLAYER_RADIUS;
+                if (glm::dot(diff, diff) <= pickupRadius * pickupRadius)
+                {
+                    gem.active = false;
+                    ++score;
+                }
+            }
+        }
+
+        for (const Gem& gem : gems)
+        {
+            GeometryInstance& instance = scene.instance(gem.instanceIndex);
+            instance.visible = gem.active;
+            if (gem.active)
+            {
+                const float amp = (gem.timeLeft <= GEM_WARNING_TIME) ? 0.30f : 0.18f;
+                const float scale = GEM_SCALE * (1.0f + amp * std::sin(gem.animTime));
+                glm::mat4 model(1.0f);
+                model = glm::translate(model, glm::vec3(gem.position, 0.0f));
+                model = glm::scale(model, glm::vec3(scale, scale, 1.0f));
+                instance.modelMatrix = model;
+            }
+        }
+    }
+
     // Aggiorna i dardi, controlla se escono dallo schermo o se colpiscono pipistrelli/fantasmi (2 colpi per ucciderli)
     void updateProjectiles(
         Scene& scene,
         std::vector<Projectile>& projectiles,
         std::vector<Bat>& bats,
         std::vector<Ghost>& ghosts,
+        std::vector<Gem>& gems,
         float halfWidth,
         float halfHeight,
-        float dt,
-        int& score)
+        float dt)
     {
         for (Projectile& p : projectiles)
         {
@@ -526,12 +610,12 @@ namespace
                     if (glm::length(p.velocity) > 0.001f)
                         b.position += glm::normalize(p.velocity) * 5.0f;
 
-                    // Al secondo attacco il pipistrello muore e sparisce
+                    // Al secondo attacco il pipistrello muore e rilascia una gemma
                     if (b.hp <= 0)
                     {
                         b.alive = false;
                         batInstance.visible = false;
-                        ++score;
+                        spawnGem(gems, b.position);
                     }
                     break;
                 }
@@ -558,12 +642,12 @@ namespace
                     if (glm::length(p.velocity) > 0.001f)
                         g.position += glm::normalize(p.velocity) * 4.5f;
 
-                    // Al secondo attacco il fantasma muore e incrementa lo score
+                    // Al secondo attacco il fantasma muore e rilascia una gemma
                     if (g.hp <= 0)
                     {
                         g.alive = false;
                         ghostInstance.visible = false;
-                        ++score;
+                        spawnGem(gems, g.position);
                     }
                     break;
                 }
@@ -759,6 +843,19 @@ int main()
             scene.instance(pellet.instanceIndex).visible = false;
         }
 
+        // Geometria condivisa per le gemme rilasciate dai nemici alla morte (4 triangoli)
+        const MeshData gemMesh = ShapeGenerator::createGem(
+            glm::vec4(0.95f, 1.0f, 1.0f, 1.0f),
+            glm::vec4(0.10f, 0.88f, 0.72f, 1.0f)
+        );
+        const std::size_t gemGeometry = scene.addGeometry(gemMesh);
+        std::vector<Gem> gems(MAX_GEMS);
+        for (Gem& gem : gems)
+        {
+            gem.instanceIndex = scene.addInstance(gemGeometry);
+            scene.instance(gem.instanceIndex).visible = false;
+        }
+
         // Una sola geometria condivisa da tutti i proiettili del pool
         const MeshData boltMesh = ShapeGenerator::createRectangle(
             glm::vec4(0.85f, 0.22f, 0.18f, 1.0f),
@@ -836,7 +933,8 @@ int main()
                     moveDir.y += 1.0f;
             }
 
-            if (glm::length(moveDir) > 0.0f)
+            const bool isMoving = glm::length(moveDir) > 0.0f;
+            if (isMoving)
                 moveDir = glm::normalize(moveDir);
 
             playerPos += moveDir * gui.playerSpeed() * dt;
@@ -852,7 +950,7 @@ int main()
             const float aimAngle = std::atan2(worldMouseY - shoulderPos.y, worldMouseX - shoulderPos.x);
             const glm::vec2 aimDirection(std::cos(aimAngle), std::sin(aimAngle));
             if (activePlay)
-                player.updateTransform(scene, playerPos, aimAngle);
+                player.updateTransform(scene, playerPos, aimAngle, isMoving, dt);
 
             // Sparo con click sinistro o barra spaziatrice (usa i parametri degli slider in Gui)
             const ImGuiIO& io = ImGui::GetIO();
@@ -896,7 +994,8 @@ int main()
                     dt
                 );
                 updateEnemyPellets(scene, enemyPellets, playerPos, playerLives, halfWidth, WORLD_HALF_HEIGHT, dt);
-                updateProjectiles(scene, projectiles, bats, ghosts, halfWidth, WORLD_HALF_HEIGHT, dt, score);
+                updateProjectiles(scene, projectiles, bats, ghosts, gems, halfWidth, WORLD_HALF_HEIGHT, dt);
+                updateGems(scene, gems, playerPos, playerLives, dt, score);
             }
             updateHeartsHUD(scene, heartInstances, playerLives, halfWidth, WORLD_HALF_HEIGHT);
 
@@ -932,6 +1031,7 @@ int main()
             if (gui.resetRequested())
             {
                 playerPos = glm::vec2(0.0f, 0.0f);
+                player.updateTransform(scene, playerPos, 0.0f);
                 playerLives = MAX_LIVES;
                 score = 0;
                 for (Projectile& p : projectiles)
@@ -943,6 +1043,11 @@ int main()
                 {
                     pellet.active = false;
                     scene.instance(pellet.instanceIndex).visible = false;
+                }
+                for (Gem& gem : gems)
+                {
+                    gem.active = false;
+                    scene.instance(gem.instanceIndex).visible = false;
                 }
                 for (Bat& b : bats)
                 {
