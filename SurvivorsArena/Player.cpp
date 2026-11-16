@@ -26,75 +26,70 @@ namespace
 
 Player::Player(Scene& scene)
 {
-    // Colori 
-    const glm::vec4 steelDark(0.22f, 0.23f, 0.26f, 1.0f);
-    const glm::vec4 steelLight(0.46f, 0.48f, 0.53f, 1.0f);
-    const glm::vec4 crimsonDark(0.32f, 0.08f, 0.09f, 1.0f);
-    const glm::vec4 crimsonLight(0.52f, 0.14f, 0.15f, 1.0f);
-    const glm::vec4 capeDark(0.14f, 0.06f, 0.07f, 1.0f);
-    const glm::vec4 capeTop(0.28f, 0.11f, 0.11f, 1.0f);
-    const glm::vec4 visorRed(1.0f, 0.16f, 0.12f, 1.0f);
-    const glm::vec4 visorOrange(1.0f, 0.30f, 0.18f, 1.0f);
-    const glm::vec4 woodDark(0.24f, 0.13f, 0.13f, 1.0f);
-    const glm::vec4 woodLight(0.42f, 0.22f, 0.21f, 1.0f);
+    // Colori a tinta unita (palette pulita ed essenziale, senza sfumature complesse)
+    const glm::vec4 colorArmor(0.38f, 0.40f, 0.46f, 1.0f); // Grigio acciaio solido
+    const glm::vec4 colorCloth(0.18f, 0.22f, 0.28f, 1.0f); // Tunica e braccia blu scuro
+    const glm::vec4 colorCape(0.68f, 0.15f, 0.18f, 1.0f);  // Mantello rosso cremisi solido
+    const glm::vec4 colorVisor(0.75f, 0.92f, 1.0f, 1.0f); // Visiera celeste luminosa
+    const glm::vec4 colorWood(0.50f, 0.30f, 0.16f, 1.0f);  // Legno balestra solido
 
-    // Poche geometrie base condivise tra tutte le parti del personaggio
+    // Geometrie base condivise (colori piatti uniformi per ogni vertice)
     const std::size_t triCapeGeo = scene.addGeometry(
-        ShapeGenerator::createTriangle(capeTop, capeTop, capeDark)
+        ShapeGenerator::createTriangle(colorCape, colorCape, colorCape)
     );
-    const std::size_t triSteelGeo = scene.addGeometry(
-        ShapeGenerator::createTriangle(steelDark, steelDark, steelLight)
+    const std::size_t triArmorGeo = scene.addGeometry(
+        ShapeGenerator::createTriangle(colorArmor, colorArmor, colorArmor)
     );
-    const std::size_t rectSteelGeo = scene.addGeometry(
-        ShapeGenerator::createRectangle(steelDark, steelLight)
+    const std::size_t rectArmorGeo = scene.addGeometry(
+        ShapeGenerator::createRectangle(colorArmor, colorArmor)
     );
-    const std::size_t circleSteelGeo = scene.addGeometry(
-        ShapeGenerator::createCircle(0.0f, 0.0f, 0.5f, 0.5f, 20, steelLight, steelDark)
-    );
-    const std::size_t rectCrimsonGeo = scene.addGeometry(
-        ShapeGenerator::createRectangle(crimsonDark, crimsonLight)
+    const std::size_t rectClothGeo = scene.addGeometry(
+        ShapeGenerator::createRectangle(colorCloth, colorCloth)
     );
     const std::size_t rectVisorGeo = scene.addGeometry(
-        ShapeGenerator::createRectangle(visorRed, visorOrange)
+        ShapeGenerator::createRectangle(colorVisor, colorVisor)
     );
     const std::size_t rectWoodGeo = scene.addGeometry(
-        ShapeGenerator::createRectangle(woodDark, woodLight)
+        ShapeGenerator::createRectangle(colorWood, colorWood)
+    );
+    const std::size_t circleArmorGeo = scene.addGeometry(
+        ShapeGenerator::createCircle(0.0f, 0.0f, 0.5f, 0.5f, 20, colorArmor, colorArmor)
     );
 
     const float pi = glm::pi<float>();
     const float halfPi = glm::half_pi<float>();
 
-    // 1. Mantello dietro al corpo (3 triangoli puntati verso il basso)
+    // 1. Mantello dietro al corpo (3 triangoli sfalsati a ventaglio)
     addPart(m_bodyParts, scene, triCapeGeo, glm::vec2(-2.3f, -3.5f), glm::vec2(4.6f, 13.5f), pi - 0.14f);
     addPart(m_bodyParts, scene, triCapeGeo, glm::vec2(0.0f, -3.8f), glm::vec2(5.0f, 14.0f), pi);
     addPart(m_bodyParts, scene, triCapeGeo, glm::vec2(2.3f, -3.5f), glm::vec2(4.6f, 13.5f), pi + 0.14f);
 
     // 2. Gambe e stivali (divisi in sinistra e destra per animare i passi)
-    addPart(m_leftLegParts, scene, circleSteelGeo, glm::vec2(-1.8f, -6.2f), glm::vec2(2.2f, 8.2f));
-    addPart(m_leftLegParts, scene, triSteelGeo, glm::vec2(-2.0f, -10.8f), glm::vec2(2.4f, 1.8f));
-    addPart(m_rightLegParts, scene, circleSteelGeo, glm::vec2(1.8f, -6.2f), glm::vec2(2.2f, 8.2f));
-    addPart(m_rightLegParts, scene, triSteelGeo, glm::vec2(2.0f, -10.8f), glm::vec2(2.4f, 1.8f));
+    addPart(m_leftLegParts, scene, circleArmorGeo, glm::vec2(-1.8f, -6.2f), glm::vec2(2.2f, 8.2f));
+    addPart(m_leftLegParts, scene, triArmorGeo, glm::vec2(-2.0f, -10.8f), glm::vec2(2.4f, 1.8f));
+    addPart(m_rightLegParts, scene, circleArmorGeo, glm::vec2(1.8f, -6.2f), glm::vec2(2.2f, 8.2f));
+    addPart(m_rightLegParts, scene, triArmorGeo, glm::vec2(2.0f, -10.8f), glm::vec2(2.4f, 1.8f));
 
-    // 3. Busto, cintura, braccia statiche e spallacci
-    addPart(m_bodyParts, scene, rectCrimsonGeo, glm::vec2(-3.5f, 0.8f), glm::vec2(1.4f, 4.0f));
-    addPart(m_bodyParts, scene, rectCrimsonGeo, glm::vec2(3.5f, 0.8f), glm::vec2(1.4f, 4.0f));
-    addPart(m_bodyParts, scene, rectSteelGeo, glm::vec2(0.0f, 0.8f), glm::vec2(6.0f, 6.0f));
-    addPart(m_bodyParts, scene, rectCrimsonGeo, glm::vec2(0.0f, -1.8f), glm::vec2(6.2f, 1.1f));
-    addPart(m_bodyParts, scene, circleSteelGeo, glm::vec2(-3.2f, 3.0f), glm::vec2(2.6f, 2.4f));
-    addPart(m_bodyParts, scene, circleSteelGeo, glm::vec2(3.2f, 3.0f), glm::vec2(2.6f, 2.4f));
+    // 3. Busto, cintura, braccia e spallacci
+    addPart(m_bodyParts, scene, rectClothGeo, glm::vec2(-3.5f, 0.8f), glm::vec2(1.4f, 4.0f));
+    addPart(m_bodyParts, scene, rectClothGeo, glm::vec2(3.5f, 0.8f), glm::vec2(1.4f, 4.0f));
+    addPart(m_bodyParts, scene, rectArmorGeo, glm::vec2(0.0f, 0.8f), glm::vec2(6.0f, 6.0f));
+    addPart(m_bodyParts, scene, rectClothGeo, glm::vec2(0.0f, -1.8f), glm::vec2(6.2f, 1.1f));
+    addPart(m_bodyParts, scene, circleArmorGeo, glm::vec2(-3.2f, 3.0f), glm::vec2(2.6f, 2.4f));
+    addPart(m_bodyParts, scene, circleArmorGeo, glm::vec2(3.2f, 3.0f), glm::vec2(2.6f, 2.4f));
 
-    // 4. Elmo e visiera a "T" rossa
-    addPart(m_bodyParts, scene, circleSteelGeo, glm::vec2(0.0f, 7.6f), glm::vec2(4.6f, 2.6f));
-    addPart(m_bodyParts, scene, rectSteelGeo, glm::vec2(0.0f, 5.7f), glm::vec2(4.6f, 4.0f));
+    // 4. Elmo e visiera a "T"
+    addPart(m_bodyParts, scene, circleArmorGeo, glm::vec2(0.0f, 7.6f), glm::vec2(4.6f, 2.6f));
+    addPart(m_bodyParts, scene, rectArmorGeo, glm::vec2(0.0f, 5.7f), glm::vec2(4.6f, 4.0f));
     addPart(m_bodyParts, scene, rectVisorGeo, glm::vec2(0.0f, 6.25f), glm::vec2(2.8f, 0.7f));
     addPart(m_bodyParts, scene, rectVisorGeo, glm::vec2(0.0f, 5.15f), glm::vec2(0.75f, 2.4f));
 
-    // 5. Balestra (orbita intorno al player puntando verso il cursore del mouse)
+    // 5. Balestra orientabile (fusto, flettenti inclinati, dardo e punta a triangolo)
     addPart(m_weaponParts, scene, rectWoodGeo, glm::vec2(8.2f, 0.0f), glm::vec2(7.6f, 1.25f));
     addPart(m_weaponParts, scene, rectWoodGeo, glm::vec2(10.9f, 2.25f), glm::vec2(0.75f, 4.8f), 0.48f);
     addPart(m_weaponParts, scene, rectWoodGeo, glm::vec2(10.9f, -2.25f), glm::vec2(0.75f, 4.8f), -0.48f);
-    addPart(m_weaponParts, scene, rectSteelGeo, glm::vec2(9.6f, 0.0f), glm::vec2(7.6f, 0.4f));
-    addPart(m_weaponParts, scene, triSteelGeo, glm::vec2(14.0f, 0.0f), glm::vec2(1.5f, 1.4f), -halfPi);
+    addPart(m_weaponParts, scene, rectArmorGeo, glm::vec2(9.6f, 0.0f), glm::vec2(7.6f, 0.4f));
+    addPart(m_weaponParts, scene, triArmorGeo, glm::vec2(14.0f, 0.0f), glm::vec2(1.5f, 1.4f), -halfPi);
 
     updateTransform(scene, glm::vec2(0.0f, 0.0f), 0.0f);
 }
