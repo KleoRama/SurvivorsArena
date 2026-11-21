@@ -26,14 +26,14 @@ namespace
 
 Player::Player(Scene& scene)
 {
-    // Colori a tinta unita (palette pulita ed essenziale, senza sfumature complesse)
-    const glm::vec4 colorArmor(0.38f, 0.40f, 0.46f, 1.0f); // Grigio acciaio solido
-    const glm::vec4 colorCloth(0.18f, 0.22f, 0.28f, 1.0f); // Tunica e braccia blu scuro
-    const glm::vec4 colorCape(0.68f, 0.15f, 0.18f, 1.0f);  // Mantello rosso cremisi solido
-    const glm::vec4 colorVisor(0.75f, 0.92f, 1.0f, 1.0f); // Visiera celeste luminosa
-    const glm::vec4 colorWood(0.50f, 0.30f, 0.16f, 1.0f);  // Legno balestra solido
+    //colori del personaggio
+    const glm::vec4 colorArmor(0.38f, 0.40f, 0.46f, 1.0f);
+    const glm::vec4 colorCloth(0.18f, 0.22f, 0.28f, 1.0f);
+    const glm::vec4 colorCape(0.68f, 0.15f, 0.18f, 1.0f);
+    const glm::vec4 colorVisor(0.75f, 0.92f, 1.0f, 1.0f);
+    const glm::vec4 colorWood(0.50f, 0.30f, 0.16f, 1.0f);
 
-    // Geometrie base condivise (colori piatti uniformi per ogni vertice)
+    // geometrie base condivise tra le varie parti
     const std::size_t triCapeGeo = scene.addGeometry(
         ShapeGenerator::createTriangle(colorCape, colorCape, colorCape)
     );
@@ -59,18 +59,18 @@ Player::Player(Scene& scene)
     const float pi = glm::pi<float>();
     const float halfPi = glm::half_pi<float>();
 
-    // 1. Mantello dietro al corpo (3 triangoli sfalsati a ventaglio)
+    //mantello dietro al corpo (3 triangoli)
     addPart(m_bodyParts, scene, triCapeGeo, glm::vec2(-2.3f, -3.5f), glm::vec2(4.6f, 13.5f), pi - 0.14f);
     addPart(m_bodyParts, scene, triCapeGeo, glm::vec2(0.0f, -3.8f), glm::vec2(5.0f, 14.0f), pi);
     addPart(m_bodyParts, scene, triCapeGeo, glm::vec2(2.3f, -3.5f), glm::vec2(4.6f, 13.5f), pi + 0.14f);
 
-    // 2. Gambe e stivali (divisi in sinistra e destra per animare i passi)
+    // gambe e stivali (divisi in sinistra e destra per l'animazione)
     addPart(m_leftLegParts, scene, circleArmorGeo, glm::vec2(-1.8f, -6.2f), glm::vec2(2.2f, 8.2f));
     addPart(m_leftLegParts, scene, triArmorGeo, glm::vec2(-2.0f, -10.8f), glm::vec2(2.4f, 1.8f));
     addPart(m_rightLegParts, scene, circleArmorGeo, glm::vec2(1.8f, -6.2f), glm::vec2(2.2f, 8.2f));
     addPart(m_rightLegParts, scene, triArmorGeo, glm::vec2(2.0f, -10.8f), glm::vec2(2.4f, 1.8f));
 
-    // 3. Busto, cintura, braccia e spallacci
+    //busto, cintura, braccia e spallacci
     addPart(m_bodyParts, scene, rectClothGeo, glm::vec2(-3.5f, 0.8f), glm::vec2(1.4f, 4.0f));
     addPart(m_bodyParts, scene, rectClothGeo, glm::vec2(3.5f, 0.8f), glm::vec2(1.4f, 4.0f));
     addPart(m_bodyParts, scene, rectArmorGeo, glm::vec2(0.0f, 0.8f), glm::vec2(6.0f, 6.0f));
@@ -78,13 +78,13 @@ Player::Player(Scene& scene)
     addPart(m_bodyParts, scene, circleArmorGeo, glm::vec2(-3.2f, 3.0f), glm::vec2(2.6f, 2.4f));
     addPart(m_bodyParts, scene, circleArmorGeo, glm::vec2(3.2f, 3.0f), glm::vec2(2.6f, 2.4f));
 
-    // 4. Elmo e visiera a "T"
+    //elmo e visiera
     addPart(m_bodyParts, scene, circleArmorGeo, glm::vec2(0.0f, 7.6f), glm::vec2(4.6f, 2.6f));
     addPart(m_bodyParts, scene, rectArmorGeo, glm::vec2(0.0f, 5.7f), glm::vec2(4.6f, 4.0f));
     addPart(m_bodyParts, scene, rectVisorGeo, glm::vec2(0.0f, 6.25f), glm::vec2(2.8f, 0.7f));
     addPart(m_bodyParts, scene, rectVisorGeo, glm::vec2(0.0f, 5.15f), glm::vec2(0.75f, 2.4f));
 
-    // 5. Balestra orientabile (fusto, flettenti inclinati, dardo e punta a triangolo)
+    // balestra che ruota verso il mouse
     addPart(m_weaponParts, scene, rectWoodGeo, glm::vec2(8.2f, 0.0f), glm::vec2(7.6f, 1.25f));
     addPart(m_weaponParts, scene, rectWoodGeo, glm::vec2(10.9f, 2.25f), glm::vec2(0.75f, 4.8f), 0.48f);
     addPart(m_weaponParts, scene, rectWoodGeo, glm::vec2(10.9f, -2.25f), glm::vec2(0.75f, 4.8f), -0.48f);
@@ -130,7 +130,7 @@ void Player::updateTransform(
         glm::vec3(position.x, position.y, 0.0f)
     );
 
-    // Gambe animate in controfase durante il movimento
+    //gambe che si muovono alternate mentre cammina
     const glm::mat4 worldLeftLeg = glm::translate(
         worldRoot,
         glm::vec3(0.0f, legStep, 0.0f)
@@ -145,7 +145,7 @@ void Player::updateTransform(
     for (const Part& part : m_rightLegParts)
         scene.instance(part.instanceIndex).modelMatrix = worldRightLeg * part.localTransform;
 
-    // Busto, mantello e testa oscillano leggermente mentre il player cammina
+    // leggero movimento del busto mentre cammina
     glm::mat4 worldBody = glm::translate(worldRoot, glm::vec3(0.0f, bobY, 0.0f));
     if (bodyTilt != 0.0f)
         worldBody = glm::rotate(worldBody, bodyTilt, glm::vec3(0.0f, 0.0f, 1.0f));
@@ -153,15 +153,13 @@ void Player::updateTransform(
     for (const Part& part : m_bodyParts)
         scene.instance(part.instanceIndex).modelMatrix = worldBody * part.localTransform;
 
-    // La balestra ruota attorno al petto; quando miro a sinistra si specchia in Y per non capovolgersi
+    //la balestra ruota attorno al petto puntando verso il mouse
     const glm::vec2 shoulderOffset(0.0f, 1.5f + bobY * 0.5f);
     glm::mat4 worldWeapon = glm::translate(
         worldRoot,
         glm::vec3(shoulderOffset.x, shoulderOffset.y, 0.0f)
     );
     worldWeapon = glm::rotate(worldWeapon, aimAngleRadians, glm::vec3(0.0f, 0.0f, 1.0f));
-    if (std::cos(aimAngleRadians) < 0.0f)
-        worldWeapon = glm::scale(worldWeapon, glm::vec3(1.0f, -1.0f, 1.0f));
 
     for (const Part& part : m_weaponParts)
         scene.instance(part.instanceIndex).modelMatrix = worldWeapon * part.localTransform;

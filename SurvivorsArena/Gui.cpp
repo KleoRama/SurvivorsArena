@@ -40,7 +40,7 @@ void Gui::draw()
         ImGuiWindowFlags_NoSavedSettings |
         ImGuiWindowFlags_NoBringToFrontOnFocus;
 
-    // 1. Vera schermata iniziale a tutto schermo (senza bordi o barra del titolo)
+    //schermata iniziale a tutto schermo
     if (!m_gameStarted)
     {
         ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
@@ -53,21 +53,21 @@ void Gui::draw()
 
         ImGui::Begin("##StartScreen", nullptr, fullScreenFlags);
 
-        // Titolo grande centrato
+        //titolo centrato
         ImGui::SetWindowFontScale(3.0f);
         const char* title = "SURVIVORS ARENA";
         const float titleWidth = ImGui::CalcTextSize(title).x;
         ImGui::SetCursorPos(ImVec2((io.DisplaySize.x - titleWidth) * 0.5f, io.DisplaySize.y * 0.26f));
         ImGui::TextColored(ImVec4(0.95f, 0.25f, 0.22f, 1.0f), "%s", title);
 
-        // Sottotitolo centrato
+        // sottotitolo comandi
         ImGui::SetWindowFontScale(1.3f);
         const char* sub = "WASD per muoverti  -  Mouse per mirare  -  Click Sinistro o SPAZIO per sparare";
         const float subWidth = ImGui::CalcTextSize(sub).x;
         ImGui::SetCursorPos(ImVec2((io.DisplaySize.x - subWidth) * 0.5f, io.DisplaySize.y * 0.38f));
         ImGui::TextColored(ImVec4(0.82f, 0.80f, 0.86f, 1.0f), "%s", sub);
 
-        // Bottoni grandi centrati
+        //bottoni
         ImGui::SetWindowFontScale(1.5f);
         const float btnW = 260.0f;
         const float btnH = 54.0f;
@@ -89,7 +89,7 @@ void Gui::draw()
         ImGui::PopStyleColor(4);
         ImGui::PopStyleVar();
     }
-    // 2. Vera schermata di Game Over a tutto schermo quando il player muore
+    // schermata di game over quando finiscono le vite
     else if (m_lives <= 0)
     {
         ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
@@ -135,7 +135,7 @@ void Gui::draw()
         ImGui::PopStyleColor(4);
         ImGui::PopStyleVar();
     }
-    // 3. Durante la partita lo Score appare direttamente sulla scena senza sfondo ne' bordo, sotto i cuori
+    //in partita mostra lo score sotto ai cuori
     else
     {
         const ImGuiWindowFlags hudFlags =
@@ -153,7 +153,7 @@ void Gui::draw()
         ImGui::End();
     }
 
-    // Menu debug e statistiche (si apre/chiude in qualsiasi momento con F1)
+    //menu debug che si apre con f1
     if (m_showDebugMenu)
     {
         ImGui::SetNextWindowPos(ImVec2(12, 110), ImGuiCond_FirstUseEver);
@@ -175,7 +175,7 @@ void Gui::draw()
 
         ImGui::Separator();
         ImGui::Text("Cuori di vita: %d / 5", m_lives);
-        ImGui::Text("Score (Nemici uccisi): %d", m_score);
+        ImGui::Text("Score (Gemme raccolte): %d", m_score);
         ImGui::Text("Proiettili attivi: %d / %d", m_activeProjectiles, m_maxProjectiles);
         if (ImGui::Button("Ripristina scena"))
             m_resetRequested = true;

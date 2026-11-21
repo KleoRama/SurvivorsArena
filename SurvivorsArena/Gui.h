@@ -17,7 +17,7 @@ public:
     void render();
     void shutdown();
 
-    // Apre o chiude il pannello debug
+    //apre o chiude il menu debug
     void toggleDebugMenu()
     {
         m_showDebugMenu = !m_showDebugMenu;
@@ -28,7 +28,7 @@ public:
         return m_wireframe;
     }
 
-    // Parametri e statistiche regolabili dal menu F1 (stile BaseProgettoCG_2 della prof)
+    // parametri regolabili dal menu f1
     float playerSpeed() const { return m_playerSpeed; }
     float bulletSpeed() const { return m_bulletSpeed; }
     float fireCooldown() const { return m_fireCooldown; }
@@ -47,9 +47,9 @@ public:
 
 private:
     bool m_initialized = false;
-    bool m_showDebugMenu = false; // All'avvio il menu debug parte chiuso
+    bool m_showDebugMenu = false; //parte chiuso
     bool m_wireframe = false;
-    bool m_gameStarted = false;   // Parte sulla schermata iniziale
+    bool m_gameStarted = false;   // all'inizio mostra la schermata start
 
     float m_playerSpeed = 65.0f;
     float m_bulletSpeed = 140.0f;

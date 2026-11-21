@@ -16,7 +16,7 @@ namespace Input
     extern double mouseX;
     extern double mouseY;
 
-    // Restituisce true una sola volta quando premo F1 per aprire/chiudere il menu debug
+    //diventa true quando premo f1 per aprire/chiudere il menu debug
     bool consumeDebugMenuToggle();
 
     void keyCallback(

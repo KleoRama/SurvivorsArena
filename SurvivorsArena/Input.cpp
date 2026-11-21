@@ -4,12 +4,12 @@
 
 namespace Input
 {
-    // Posizione iniziale a destra del centro cosi all'avvio la balestra punta dritta
+    //posizione iniziale a destra del centro cosi all'avvio la balestra punta dritta
     double mouseX = 900.0;
     double mouseY = 350.0;
     namespace
     {
-        // Diventa true quando premo F1 e si resetta appena il main lo legge
+        //diventa true quando premo f1 e si resetta appena il main lo legge
         bool debugMenuToggleRequested = false;
     }
 
@@ -39,7 +39,7 @@ namespace Input
             );
         }
 
-        // Segnala la pressione di F1 (solo al primo tocco, non se tenuto premuto)
+        //pressione di f1
         if (
             key == GLFW_KEY_F1
             && action == GLFW_PRESS

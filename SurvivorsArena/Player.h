@@ -14,7 +14,7 @@ class Player
 public:
     explicit Player(Scene& scene);
 
-    // Aggiorna la posizione del personaggio, l'animazione di camminata e orienta la balestra
+    //aggiorna posizione del player, animazione passi e rotazione della balestra
     void updateTransform(
         Scene& scene,
         const glm::vec2& position,

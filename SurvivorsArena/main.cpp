@@ -29,7 +29,7 @@ namespace
     constexpr int INITIAL_HEIGHT = 700;
     constexpr float WORLD_HALF_HEIGHT = 100.0f;
 
-    // Limiti del mondo, raggi di collisione e parametri base (stile BaseProgettoCG_2 della prof)
+    // limiti del mondo e raggi per le collisioni
     constexpr float PLAYER_MARGIN_X = 6.0f;
     constexpr float PLAYER_MARGIN_Y = 12.0f;
     constexpr float PLAYER_RADIUS = 7.5f;
@@ -43,12 +43,12 @@ namespace
     constexpr float MUZZLE_DISTANCE = 14.5f;
 
     constexpr int MAX_BATS = 15;
-    constexpr int BAT_MAX_HP = 2; // I pipistrelli muoiono con 2 colpi
+    constexpr int BAT_MAX_HP = 2; //muoiono con 2 colpi
     constexpr float BAT_OBJ_SCALE = 22.0f;
     constexpr float BAT_RADIUS = 7.0f;
 
     constexpr int MAX_GHOSTS = 10;
-    constexpr int GHOST_MAX_HP = 2; // I fantasmi hanno 2 cuori di vita (muoiono con 2 colpi)
+    constexpr int GHOST_MAX_HP = 2;
     constexpr float GHOST_OBJ_SCALE = 24.0f;
     constexpr float GHOST_RADIUS = 7.0f;
     constexpr float GHOST_MIN_DIST = 55.0f;
@@ -59,11 +59,13 @@ namespace
     constexpr float PELLET_RADIUS = 2.2f;
     constexpr float PELLET_SPEED = 62.0f;
 
-    constexpr int MAX_GEMS = MAX_BATS + MAX_GHOSTS;
+    constexpr float ENEMY_RESPAWN_TIME = 3.0f; //tempo di respawn dei nemici
+
+    constexpr int MAX_GEMS = 40;
     constexpr float GEM_SCALE = 5.5f;
     constexpr float GEM_RADIUS = 3.6f;
-    constexpr float GEM_LIFETIME = 8.0f;      // Secondi prima che la gemma a terra sparisca
-    constexpr float GEM_WARNING_TIME = 2.5f;  // Negli ultimi secondi pulsa molto piu' velocemente
+    constexpr float GEM_LIFETIME = 8.0f;      // secondi prima che la gemma sparisca
+    constexpr float GEM_WARNING_TIME = 2.5f;  //negli ultimi secondi pulsa piu' veloce
 
     struct Projectile
     {
@@ -78,6 +80,7 @@ namespace
     {
         std::size_t instanceIndex = 0;
         glm::vec2 position{0.0f};
+        float respawnTimer = 0.0f;
         int hp = BAT_MAX_HP;
         bool alive = true;
     };
@@ -87,6 +90,7 @@ namespace
         std::size_t instanceIndex = 0;
         glm::vec2 position{0.0f};
         float shootTimer = 1.5f;
+        float respawnTimer = 0.0f;
         int hp = GHOST_MAX_HP;
         bool alive = true;
     };
@@ -108,7 +112,7 @@ namespace
         bool active = false;
     };
 
-    std::mt19937 randomEngine(static_cast<unsigned int>(std::time(nullptr))); // Seed basato sull'orario per spawn casuale
+    std::mt19937 randomEngine(static_cast<unsigned int>(std::time(nullptr))); //seed per lo spawn casuale
 
     float randomBetween(float lo, float hi)
     {
@@ -116,7 +120,7 @@ namespace
         return dist(randomEngine);
     }
 
-    // Posiziona un pipistrello lontano dal player e senza sovrapporsi agli altri
+    //mette un pipistrello lontano dal player e dagli altri
     void respawnBat(
         Bat& b,
         const std::vector<Bat>& bats,
@@ -132,6 +136,7 @@ namespace
 
         b.hp = BAT_MAX_HP;
         b.alive = true;
+        b.respawnTimer = 0.0f;
 
         for (int attempt = 0; attempt < 400; ++attempt)
         {
@@ -163,7 +168,7 @@ namespace
         b.position = glm::vec2(xmin, ymax);
     }
 
-    // Posiziona un fantasmino a distanza dal player e dagli altri fantasmi
+    //posiziona un fantasma a distanza dal player
     void respawnGhost(
         Ghost& g,
         const std::vector<Ghost>& ghosts,
@@ -179,6 +184,7 @@ namespace
 
         g.hp = GHOST_MAX_HP;
         g.alive = true;
+        g.respawnTimer = 0.0f;
         g.shootTimer = randomBetween(0.8f, GHOST_SHOOT_INTERVAL);
 
         for (int attempt = 0; attempt < 400; ++attempt)
@@ -211,7 +217,7 @@ namespace
         g.position = glm::vec2(xmax, ymax);
     }
 
-    // Attiva un pallino bianco sparato da un fantasma verso il player
+    // attiva un pallino bianco sparato dal fantasma
     void fireEnemyPellet(
         std::vector<EnemyPellet>& pellets,
         const glm::vec2& origin,
@@ -229,7 +235,7 @@ namespace
         }
     }
 
-    // Cerca il primo dardo libero (entro il limite maxAllowed della GUI) e lo fa partire
+    //cerca il primo proiettile libero nel pool e lo fa partire
     void fireProjectile(
         std::vector<Projectile>& projectiles,
         int maxAllowed,
@@ -260,7 +266,7 @@ namespace
         }
     }
 
-    // Muove i pipistrelli verso il player, evita che si sovrappongano e toglie 1 cuore al contatto
+    // muove i pipistrelli verso il player e controlla il contatto
     void updateBats(
         Scene& scene,
         std::vector<Bat>& bats,
@@ -275,10 +281,24 @@ namespace
             Bat& b = bats[i];
             GeometryInstance& instance = scene.instance(b.instanceIndex);
 
-            if (static_cast<int>(i) >= maxActiveBats || !b.alive)
+            if (static_cast<int>(i) >= maxActiveBats)
             {
                 instance.visible = false;
                 continue;
+            }
+
+            if (!b.alive)
+            {
+                b.respawnTimer -= dt;
+                if (b.respawnTimer <= 0.0f)
+                {
+                    respawnBat(b, bats, scene, playerPos);
+                }
+                else
+                {
+                    instance.visible = false;
+                    continue;
+                }
             }
 
             instance.visible = true;
@@ -293,14 +313,14 @@ namespace
                     b.position += dir * batSpeed * dt;
                 }
 
-                // Se le hitbox di pipistrello e player si toccano, il player perde 1 cuore
+                //se tocca il player toglie un cuore
                 const glm::vec2 diffPlayer = b.position - playerPos;
                 const float hitRadius = BAT_RADIUS + PLAYER_RADIUS;
                 if (glm::dot(diffPlayer, diffPlayer) <= hitRadius * hitRadius)
                 {
                     playerLives = std::max(0, playerLives - 1);
 
-                    // Il pipistrello rimbalza indietro dopo aver morso il player
+                    //rimbalza indietro dopo aver colpito
                     if (dist > 0.001f)
                         b.position -= (toPlayer / dist) * 38.0f;
                     else
@@ -309,7 +329,7 @@ namespace
             }
         }
 
-        // Separazione semplice tra pipistrelli vicini (come resolveTargetCollisions della prof)
+        // evita che i pipistrelli si sovrappongano tra loro
         for (std::size_t i = 0; i < bats.size(); ++i)
         {
             if (!bats[i].alive || !scene.instance(bats[i].instanceIndex).visible)
@@ -333,7 +353,7 @@ namespace
             }
         }
 
-        // Aggiorna la Model Matrix di ogni pipistrello (se ha 1 solo HP rimasto appare leggermente piu piccolo)
+        //aggiorna la model matrix (se ha 1 solo hp diventa un po' piu piccolo)
         for (const Bat& b : bats)
         {
             GeometryInstance& instance = scene.instance(b.instanceIndex);
@@ -348,7 +368,7 @@ namespace
         }
     }
 
-    // Muove lentamente i fantasmi mantenendoli a distanza dal player e spara i pallini bianchi
+    //movimento lento dei fantasmi e sparo dei pallini bianchi
     void updateGhosts(
         Scene& scene,
         std::vector<Ghost>& ghosts,
@@ -366,10 +386,24 @@ namespace
             Ghost& g = ghosts[i];
             GeometryInstance& instance = scene.instance(g.instanceIndex);
 
-            if (static_cast<int>(i) >= maxActiveGhosts || !g.alive)
+            if (static_cast<int>(i) >= maxActiveGhosts)
             {
                 instance.visible = false;
                 continue;
+            }
+
+            if (!g.alive)
+            {
+                g.respawnTimer -= dt;
+                if (g.respawnTimer <= 0.0f)
+                {
+                    respawnGhost(g, ghosts, scene, playerPos);
+                }
+                else
+                {
+                    instance.visible = false;
+                    continue;
+                }
             }
 
             instance.visible = true;
@@ -380,7 +414,7 @@ namespace
                 const float dist = glm::length(toPlayer);
                 const glm::vec2 dirToPlayer = (dist > 0.001f) ? (toPlayer / dist) : glm::vec2(1.0f, 0.0f);
 
-                // Se e' troppo lontano si avvicina lentamente; se il player si avvicina troppo, si allontana
+                //se e' lontano si avvicina, se il player si avvicina troppo scappa indietro
                 if (dist > GHOST_MAX_DIST)
                 {
                     g.position += dirToPlayer * ghostSpeed * dt;
@@ -391,16 +425,16 @@ namespace
                 }
                 else
                 {
-                    // Alla giusta distanza fluttua leggermente di lato
+                    //alla giusta distanza si muove un po' di lato
                     const glm::vec2 tangent(-dirToPlayer.y, dirToPlayer.x);
                     g.position += tangent * (ghostSpeed * 0.35f) * dt;
                 }
 
-                // Mantiene il fantasma dentro i bordi dello schermo
+                // non esce dallo schermo
                 g.position.x = std::clamp(g.position.x, -halfWidth + GHOST_RADIUS + 2.0f, halfWidth - GHOST_RADIUS - 2.0f);
                 g.position.y = std::clamp(g.position.y, -halfHeight + GHOST_RADIUS + 2.0f, halfHeight - GHOST_RADIUS - 2.0f);
 
-                // Spara periodicamente un pallino bianco verso il player
+                //sparo del pallino bianco
                 g.shootTimer -= dt;
                 if (g.shootTimer <= 0.0f)
                 {
@@ -410,7 +444,7 @@ namespace
             }
         }
 
-        // Separazione semplice tra fantasmi vicini
+        //separazione tra fantasmi vicini
         for (std::size_t i = 0; i < ghosts.size(); ++i)
         {
             if (!ghosts[i].alive || !scene.instance(ghosts[i].instanceIndex).visible)
@@ -434,7 +468,7 @@ namespace
             }
         }
 
-        // Aggiorna la Model Matrix di ogni fantasma (se gli resta 1 solo cuore di vita appare leggermente piu piccolo)
+        // aggiorna la model matrix dei fantasmi
         for (const Ghost& g : ghosts)
         {
             GeometryInstance& instance = scene.instance(g.instanceIndex);
@@ -449,7 +483,7 @@ namespace
         }
     }
 
-    // Aggiorna i pallini bianchi dei fantasmi e toglie 1 cuore al player se lo colpiscono
+    //aggiorna i pallini sparati dai fantasmi
     void updateEnemyPellets(
         Scene& scene,
         std::vector<EnemyPellet>& pellets,
@@ -498,7 +532,7 @@ namespace
         }
     }
 
-    // Fa cadere a terra una gemma nella posizione del nemico appena sconfitto
+    //fa cadere una gemma dove e' morto il nemico
     void spawnGem(std::vector<Gem>& gems, const glm::vec2& position)
     {
         for (Gem& gem : gems)
@@ -514,7 +548,7 @@ namespace
         }
     }
 
-    // Aggiorna le gemme a terra (pulsazione, scomparsa per tempo e raccolta da parte del player)
+    // gestisce le gemme a terra (animazione, timer e raccolta)
     void updateGems(
         Scene& scene,
         std::vector<Gem>& gems,
@@ -535,7 +569,7 @@ namespace
                 continue;
             }
 
-            // Negli ultimi secondi prima del despawn la gemma pulsa molto piu' velocemente
+            //quando sta per sparire pulsa piu velocemente
             const float pulseSpeed = (gem.timeLeft <= GEM_WARNING_TIME) ? 20.0f : 6.0f;
             gem.animTime += dt * pulseSpeed;
 
@@ -567,7 +601,7 @@ namespace
         }
     }
 
-    // Aggiorna i dardi, controlla se escono dallo schermo o se colpiscono pipistrelli/fantasmi (2 colpi per ucciderli)
+    //aggiorna i proiettili del player e controlla se colpiscono pipistrelli o fantasmi
     void updateProjectiles(
         Scene& scene,
         std::vector<Projectile>& projectiles,
@@ -592,7 +626,7 @@ namespace
                 continue;
             }
 
-            // Collisione cerchio-cerchio tra dardo e pipistrelli vivi
+            // collisione proiettile - pipistrelli
             for (Bat& b : bats)
             {
                 GeometryInstance& batInstance = scene.instance(b.instanceIndex);
@@ -606,14 +640,15 @@ namespace
                     p.active = false;
                     b.hp -= 1;
 
-                    // Piccolo rinculo sul pipistrello colpito
+                    //piccolo rinculo quando viene colpito
                     if (glm::length(p.velocity) > 0.001f)
                         b.position += glm::normalize(p.velocity) * 5.0f;
 
-                    // Al secondo attacco il pipistrello muore e rilascia una gemma
+                    //al secondo colpo muore e lascia una gemma
                     if (b.hp <= 0)
                     {
                         b.alive = false;
+                        b.respawnTimer = ENEMY_RESPAWN_TIME;
                         batInstance.visible = false;
                         spawnGem(gems, b.position);
                     }
@@ -624,7 +659,7 @@ namespace
             if (!p.active)
                 continue;
 
-            // Collisione cerchio-cerchio tra dardo e fantasmi vivi (2 cuori di vita)
+            // collisione proiettile - fantasmi
             for (Ghost& g : ghosts)
             {
                 GeometryInstance& ghostInstance = scene.instance(g.instanceIndex);
@@ -638,14 +673,14 @@ namespace
                     p.active = false;
                     g.hp -= 1;
 
-                    // Piccolo rinculo sul fantasma colpito
                     if (glm::length(p.velocity) > 0.001f)
                         g.position += glm::normalize(p.velocity) * 4.5f;
 
-                    // Al secondo attacco il fantasma muore e rilascia una gemma
+                    //al secondo colpo muore e lascia una gemma
                     if (g.hp <= 0)
                     {
                         g.alive = false;
+                        g.respawnTimer = ENEMY_RESPAWN_TIME;
                         ghostInstance.visible = false;
                         spawnGem(gems, g.position);
                     }
@@ -669,7 +704,7 @@ namespace
         }
     }
 
-    // Posiziona in alto a sinistra i 5 cuori di vita del player e nasconde quelli persi
+    //disegna i 5 cuori in alto a sinistra
     void updateHeartsHUD(
         Scene& scene,
         const std::vector<std::size_t>& heartInstances,
@@ -748,7 +783,7 @@ int main()
             return 1;
         }
 
-        // Secondo shader program dedicato solo allo sfondo
+        //secondo shader per lo sfondo
         Shader backgroundShader;
         if (!backgroundShader.load("shader/background.vert", "shader/background.frag"))
         {
@@ -763,7 +798,7 @@ int main()
         Scene scene;
         Player player(scene);
 
-        // Carica il pipistrello modellato con curve di Hermite (come in BaseProgettoCG_2 della prof)
+        //caricamento pipistrello fatto con curve di Hermite
         MeshData batMesh;
         std::string batLoadError;
         bool batLoaded = false;
@@ -796,7 +831,7 @@ int main()
             scene.instance(b.instanceIndex).visible = true;
         }
 
-        // Carica il fantasmino modellato con curve di Hermite (fantasma.obj + fantasma.mtl)
+        //caricamento fantasma (sempre con Hermite)
         MeshData ghostMesh;
         std::string ghostLoadError;
         bool ghostLoaded = false;
@@ -829,7 +864,7 @@ int main()
             scene.instance(g.instanceIndex).visible = true;
         }
 
-        // Geometria condivisa per i pallini bianchi sparati dai fantasmi
+        //pallini bianchi sparati dai fantasmi
         const MeshData pelletMesh = ShapeGenerator::createCircle(
             0.0f, 0.0f, PELLET_RADIUS, PELLET_RADIUS, 18,
             glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
@@ -843,7 +878,7 @@ int main()
             scene.instance(pellet.instanceIndex).visible = false;
         }
 
-        // Geometria condivisa per le gemme rilasciate dai nemici alla morte (4 triangoli)
+        // gemme rilasciate dai nemici quando muoiono
         const MeshData gemMesh = ShapeGenerator::createGem(
             glm::vec4(0.95f, 1.0f, 1.0f, 1.0f),
             glm::vec4(0.10f, 0.88f, 0.72f, 1.0f)
@@ -856,7 +891,7 @@ int main()
             scene.instance(gem.instanceIndex).visible = false;
         }
 
-        // Una sola geometria condivisa da tutti i proiettili del pool
+        //geometria condivisa per i dardi della balestra
         const MeshData boltMesh = ShapeGenerator::createRectangle(
             glm::vec4(0.85f, 0.22f, 0.18f, 1.0f),
             glm::vec4(1.0f, 0.82f, 0.45f, 1.0f)
@@ -869,7 +904,7 @@ int main()
             scene.instance(p.instanceIndex).visible = false;
         }
 
-        // 5 cuori di vita a schermo in alto a sinistra (condividono la stessa geometria heartGeometry)
+        // 5 cuori di vita in alto a sinistra
         const MeshData heartMesh = ShapeGenerator::createHeart(
             0.0f, 0.0f, 0.05f, 0.05f, 80,
             glm::vec4(1.0f, 0.85f, 0.85f, 1.0f),
@@ -894,7 +929,7 @@ int main()
         {
             glfwPollEvents();
 
-            // Se ho premuto F1, apre o chiude il menu debug
+            //f1 apre/chiude il menu debug
             if (Input::consumeDebugMenuToggle())
                 gui.toggleDebugMenu();
 
@@ -917,7 +952,7 @@ int main()
             );
             renderer.setProjectionMatrix(projection);
 
-            // La partita si aggiorna solo dopo aver premuto "Inizia gioco" e finche' il player e' in vita
+            //il gioco va avanti solo se siamo in partita e il player e' vivo
             const bool activePlay = gui.gameStarted() && (playerLives > 0);
 
             glm::vec2 moveDir(0.0f, 0.0f);
@@ -941,7 +976,7 @@ int main()
             playerPos.x = std::clamp(playerPos.x, -halfWidth + PLAYER_MARGIN_X, halfWidth - PLAYER_MARGIN_X);
             playerPos.y = std::clamp(playerPos.y, -WORLD_HALF_HEIGHT + PLAYER_MARGIN_Y, WORLD_HALF_HEIGHT - PLAYER_MARGIN_Y);
 
-            // Converte le coordinate del mouse nello spazio mondo e orienta la balestra solo in partita
+            //coordinate del mouse nel mondo e rotazione balestra
             const float worldMouseX =
                 (static_cast<float>(Input::mouseX) / static_cast<float>(width)) * (2.0f * halfWidth) - halfWidth;
             const float worldMouseY =
@@ -952,7 +987,7 @@ int main()
             if (activePlay)
                 player.updateTransform(scene, playerPos, aimAngle, isMoving, dt);
 
-            // Sparo con click sinistro o barra spaziatrice (usa i parametri degli slider in Gui)
+            // sparo con click sinistro o spazio
             const ImGuiIO& io = ImGui::GetIO();
             const bool mousePressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
             const bool spacePressed = glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
@@ -977,7 +1012,7 @@ int main()
             }
             previousFire = firePressed;
 
-            // Aggiorna pipistrelli, fantasmi, pallini bianchi, dardi e i 5 cuori di vita a schermo
+            //aggiornamento nemici, proiettili, gemme e cuori
             if (activePlay)
             {
                 updateBats(scene, bats, gui.batCount(), gui.batSpeed(), playerPos, playerLives, dt);
@@ -999,7 +1034,7 @@ int main()
             }
             updateHeartsHUD(scene, heartInstances, playerLives, halfWidth, WORLD_HALF_HEIGHT);
 
-            // Aggiorna i contatori mostrati nell'HUD e nel menu F1
+            // aggiorna i dati per la gui
             int activeCount = 0;
             for (const Projectile& p : projectiles)
             {
@@ -1010,12 +1045,12 @@ int main()
             gui.setLives(playerLives);
             gui.setScore(score);
 
-            // Pulisce lo schermo e disegna lo sfondo 
+            //pulisce lo schermo e disegna lo sfondo
             renderer.beginFrame(glm::vec4(0.01f, 0.01f, 0.015f, 1.0f));
             renderer.setWireframe(false);
             background.draw(static_cast<float>(now));
 
-            // Disegna gli oggetti della scena solo mentre la partita e' in corso (non in Menu o Game Over)
+            //disegna la scena solo durante la partita
             if (activePlay)
             {
                 renderer.setWireframe(gui.wireframe());

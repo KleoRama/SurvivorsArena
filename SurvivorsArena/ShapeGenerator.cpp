@@ -58,7 +58,7 @@ MeshData ShapeGenerator::createRectangle(
     return data;
 }
 
-// Gemma sfaccettata a forma di rombo composta da 4 triangoli
+//gemma a forma di rombo fatta con 4 triangoli
 MeshData ShapeGenerator::createGem(
     const glm::vec4& centerColor,
     const glm::vec4& borderColor)
@@ -78,7 +78,7 @@ MeshData ShapeGenerator::createGem(
         borderColor.a
     );
 
-    // Faccetta superiore destra
+    //parte sopra a destra
     data.positions.push_back(center);
     data.positions.push_back(right);
     data.positions.push_back(top);
@@ -86,7 +86,7 @@ MeshData ShapeGenerator::createGem(
     data.colors.push_back(borderColor);
     data.colors.push_back(borderColor);
 
-    // Faccetta superiore sinistra
+    //parte sopra a sinistra
     data.positions.push_back(center);
     data.positions.push_back(top);
     data.positions.push_back(left);
@@ -94,7 +94,7 @@ MeshData ShapeGenerator::createGem(
     data.colors.push_back(borderColor);
     data.colors.push_back(borderColor);
 
-    // Faccetta inferiore sinistra
+    // parte sotto a sinistra
     data.positions.push_back(center);
     data.positions.push_back(left);
     data.positions.push_back(bottom);
@@ -102,7 +102,7 @@ MeshData ShapeGenerator::createGem(
     data.colors.push_back(darkFacet);
     data.colors.push_back(darkFacet);
 
-    // Faccetta inferiore destra
+    // parte sotto a destra
     data.positions.push_back(center);
     data.positions.push_back(bottom);
     data.positions.push_back(right);
