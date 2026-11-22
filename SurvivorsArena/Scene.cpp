@@ -20,6 +20,6 @@ std::size_t Scene::addInstance(std::size_t geometryIndex) {
 
 void Scene::clear() {
     m_instances.clear();
-    m_geometries.clear(); // i distruttori liberano VAO e VBO
+    m_geometries.clear(); //liberano VAO e VBO
 }
 

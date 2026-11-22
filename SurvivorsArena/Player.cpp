@@ -35,7 +35,7 @@ Player::Player(Scene& scene)
 
     // geometrie base condivise tra le varie parti
     const std::size_t triCapeGeo = scene.addGeometry(
-        ShapeGenerator::createTriangle(colorCape, colorCape, colorCape)
+        ShapeGenerator::createTriangle(colorCape, colorCape, colorCape) //3 parametri per colore dei 3 vertici
     );
     const std::size_t triArmorGeo = scene.addGeometry(
         ShapeGenerator::createTriangle(colorArmor, colorArmor, colorArmor)
@@ -58,6 +58,8 @@ Player::Player(Scene& scene)
 
     const float pi = glm::pi<float>();
     const float halfPi = glm::half_pi<float>();
+
+    //aggiunti in questo ordine per rispettare depth-buffer (profondità)
 
     //mantello dietro al corpo (3 triangoli)
     addPart(m_bodyParts, scene, triCapeGeo, glm::vec2(-2.3f, -3.5f), glm::vec2(4.6f, 13.5f), pi - 0.14f);
@@ -121,9 +123,9 @@ void Player::updateTransform(
         m_walkPhase = 0.0f;
 
     const float stepSin = std::sin(m_walkPhase);
-    const float bobY = isMoving ? (std::abs(stepSin) * 0.7f) : 0.0f;
-    const float bodyTilt = isMoving ? (stepSin * 0.06f) : 0.0f;
-    const float legStep = isMoving ? (stepSin * 1.4f) : 0.0f;
+    const float bobY = isMoving ? (std::abs(stepSin) * 0.7f) : 0.0f; //y del movimento del busto
+    const float bodyTilt = isMoving ? (stepSin * 0.06f) : 0.0f; //inclinazione busto
+    const float legStep = isMoving ? (stepSin * 1.4f) : 0.0f; //passo delle gambe
 
     const glm::mat4 worldRoot = glm::translate(
         glm::mat4(1.0f),
